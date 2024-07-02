@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import CardComponent from "../components";
-import {
-  ActivityIndicator,
-  Button,
-  Modal,
-  Portal,
-  Provider,
-} from "react-native-paper";
-import { fetchRandomImage, getVerse, translateText } from "../api";
+
+import * as S from "./styles";
+import { getVerse, translateText } from "../api";
+import { Portal } from "react-native-paper";
 
 type CardComponentType = {
   title: string;
@@ -33,62 +29,59 @@ export default function HomeScreen() {
     bodyTitleContent: "",
     imgUri: "",
   });
+
   const [errorMessage, setErrorMessage] = useState(false);
   const [loading, setLoading] = useState(true);
+
   function modal() {
     return (
-      <Provider>
+      <S.ModalContainer>
         <Portal>
-          <Modal
+          <S.Modal
             visible={errorMessage}
             onDismiss={() => setErrorMessage(!errorMessage)}
           >
-            <Text>
-              {
-                "Erro ao buscar ou traduzir o versículo. Por favor, tente novamente."
-              }
-            </Text>
-            <Button onPress={() => setErrorMessage(!errorMessage)}>
+            <S.TitleModal>
+              Erro ao buscar ou traduzir o versículo. Por favor, tente
+              novamente.
+            </S.TitleModal>
+            <S.ButtonModal onPress={() => setErrorMessage(!errorMessage)}>
               Fechar
-            </Button>
-          </Modal>
+            </S.ButtonModal>
+          </S.Modal>
         </Portal>
-      </Provider>
+      </S.ModalContainer>
     );
   }
-  useEffect(() => {
-    async function fetchAndTranslateVerse() {
-      try {
-        const verse = await getVerse();
-        const translatedVerse = await translateText(verse, "pt");
-        const randomImage = await fetchRandomImage();
 
-        setVersion({
-          title: `Livro: ${translatedVerse.bookname}`,
-          subTitle: `Capítulo ${translatedVerse.chapter}, Versículo ${translatedVerse.verse}`,
-          titleCardContent: "Versículo Traduzido",
-          bodyTitleContent: translatedVerse.text,
-          imgUri: randomImage,
-        });
-      } catch (error) {
-        setErrorMessage(!errorMessage);
-        console.error("Erro ao buscar ou traduzir o versículo:", error);
-      }
-    }
+  async function fetchAndTranslateVerse() {
+    try {
+      const verse = await getVerse();
+      const translatedVerse = await translateText(verse, "pt");
 
-    fetchAndTranslateVerse().finally(() => {
+      setVersion({
+        title: `Livro: ${translatedVerse.bookname}`,
+        titleCardContent: `Capítulo ${translatedVerse.chapter}, Versículo ${translatedVerse.verse}`,
+        subTitle: "Versículo Traduzido",
+        bodyTitleContent: translatedVerse.text,
+        imgUri: "https://imgur.com/3OnGilN",
+      });
+    } catch (error) {
+      setErrorMessage(!errorMessage);
+      console.error("Erro ao buscar ou traduzir o versículo:", error);
+    } finally {
       setLoading(false);
-    });
+    }
+  }
+
+  useEffect(() => {
+    fetchAndTranslateVerse();
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <S.Container>
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#0000ff"
-          style={{ justifyContent: "center", flex: 1 }}
-        />
+        <S.Loading />
       ) : (
         <>
           <CardComponent
@@ -101,6 +94,6 @@ export default function HomeScreen() {
           {modal()}
         </>
       )}
-    </View>
+    </S.Container>
   );
 }
